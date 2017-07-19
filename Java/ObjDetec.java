@@ -1,7 +1,6 @@
 
 import static java.lang.Math.abs;
 import static java.lang.Math.sqrt;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
 
 /*
@@ -23,39 +22,40 @@ public class ObjDetec {
     /** Largura da figura detectada. */
     private int width;
     /** Tipo do Cascade usado na detecção.
-     Tipos: CASC_NORMAL, CASC_INRANGE, CASC_HSV */
+     @see CascOrigin Cascade de Origem (enumeração) */
     private CascOrigin cascade;
     /** Se o objeto é considerado como correto, ou melhor, um Positivo Verdadeiro.*/
     private boolean exact;
     
-    
+    /**
+     * Tipos de Cascade de origem do objeto detectado
+     */
     public enum CascOrigin
     {
-        Indef,Normal,InRange,HSV
+        /**Cascade Indefinido.*/
+        Indef(-1),
+        /** Cascade sem transformação.*/
+        Normal(1),
+        /** Cascade que usa a transaformação "InRange" na detecção.*/
+        InRange(2),
+        /** Cascade que usa a transaformação "HSV" na detecção.*/
+        HSV(3);
+        
+        public final int id;
+        
+        private CascOrigin(int id){this.id=id;}
+        
     }
-    /** Objeto detectado por um cascade sem nenhuma transfomação.
-     * {@value}*/
-    static final int CASC_NORMAL = 1;
-    /**  Objeto detectado por um cascade depois da transformação InRange,
-     * que separa partes laranja avermelhadas da imagem.
-     * {@value} */
-    static final int CASC_INRANGE = 2;
-    /** Objeto detectado por um cascade depois da transformação para HSV.
-     * {@value}*/
-    static final int CASC_HSV = 3;
-    /** Objeto detectado por um cascade indefinido (padrão).
-     * {@value}*/
-    static final int CASC_INDEF = -1;
 
     public ObjDetec() {
     }
 
-    public ObjDetec(Point center, int height, int width, CascOrigin cascade, boolean exact) {
+    public ObjDetec(Point center, int height, int width, CascOrigin cascade) {
         this.center = center;
         this.height = height;
         this.width = width;
         this.cascade = cascade;
-        this.exact = exact;
+        this.exact = false;
     }
     
     /**
@@ -64,24 +64,63 @@ public class ObjDetec {
      * @param cascadeType Qual o tipo do Cascade usado para detectar o Retangulo.
      * @see CascOrigin
      */
-
     public ObjDetec(Rect r, CascOrigin cascadeType) {
         this.height = r.height;
         this.width = r.width;
-        this.center = new Point(r.x, r.y);
+        this.center = new Point((r.x + width/2), (r.y + height/2));
         cascade = CascOrigin.Indef;
     }
-    
+
+    public Point getCenter() {
+        return center;
+    }
+
+    public void setCenter(Point center) {
+        this.center = center;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    } 
+
+    public CascOrigin getCascade() {
+        return cascade;
+    }
+
+    public void setCascade(CascOrigin cascade) {
+        this.cascade = cascade;
+    }
+
+    public boolean isExact() {
+        return exact;
+    }
+
+    public void setExact(boolean exact) {
+        this.exact = exact;
+    }
+   
     /**
      * Método para verificar se um Objeto detectado está com seu centro contido dentro de outro.
      * @param ob Objeto que possivelmente CONTÉM o centro do que usa o método.(Container)
      * @param scale Escala para ampliar ou reduzir o objeto passado.(Scale of Container)
      * @return Retorna verdadeiro se o centro do objeto que usa o método, está dentro do objeto passado depois de escalado.
      */
-    public boolean isCenterInside (ObjDetec ob ,int scale)
+    public boolean isCenterInside (ObjDetec ob ,double scale)
     {
-        int h = ob.height*scale/2;
-        int w = ob.width*scale/2;
+        double h = ob.height*scale/2;
+        double w = ob.width*scale/2;
         return (abs(this.center.x - ob.center.x) < w) && (abs(this.center.y - ob.center.y) < h);
     }
     
@@ -105,7 +144,7 @@ public class ObjDetec {
     public boolean isInside (ObjDetec ob ,int scale)
     {
         int h = (ob.height*scale - this.height);
-        int w = (ob.width*scale - this.height);
+        int w = (ob.width*scale - this.width);
         return (abs(this.center.x - ob.center.x) < w) && (abs(this.center.y - ob.center.y) < h);
     }
     
@@ -131,6 +170,52 @@ public class ObjDetec {
     }
     
     /**
+     * Método para calcular o perimetro do objeto detectado.
+     * @return Retorn 2*(altura+largura).
+     */
+    public double perimeter()
+    {
+        return 2*(this.height + this.width);//Pondera a diferenca das dimensões com a soma das dimensões
+    }
+    
+    /**
+     * Método que retorna a area do objeto detectado.
+    * @return Retorna altura*largura.
+     */
+    public double area()
+    {
+      return width*height;
+    }
+    
+    /**
+     * Método de comparação entre objetos detectados pela relação de suas dimensões.
+     * @param ob Objeto a ser comparado.
+     * @return Retorn 1 - (diferença/soma). Quanto mais proximo de 1 mais parecidas são as dimensões.
+     */
+    public double compareDimen(ObjDetec ob)
+    {
+        double dif = abs(ob.width - this.width) + abs(ob.height - this.height);
+        
+        //Pondera a diferenca das dimensões com a soma dos perimetros
+        return 1 - 2*dif/(ob.perimeter() + this.perimeter());
+    }
+    
+    /**
+     * Método de comparação entre objetos detectados pela relação de suas areas.
+     * @param ob Objeto a ser comparado.
+     * @return Retorna 1 - (diferença/soma). Quanto mais proximo de 1 mais parecidas são as areas.
+     */
+    public double compareArea(ObjDetec ob)
+    {
+        return 1 - ( abs(ob.area() - this.area())/(ob.area() + this.area()) );
+    }
+    
+    
+    public Rect toRect()
+    {
+        return new Rect((int)center.x-width/2,(int)center.y-height/2,width,height);
+    }
+    /**
      * Método rapido para elevar um numero double ao quadrado.
      * @param a Valor a ser operado.
      * @return Retorn a².
@@ -138,5 +223,17 @@ public class ObjDetec {
     static public double sqr(double a)
     {
             return a*a;
+    }
+    
+    static public class Point
+    {
+        int x;
+        int y;
+
+        public Point(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        
     }
 }
