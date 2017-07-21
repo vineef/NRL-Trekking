@@ -37,6 +37,7 @@ public class CamDetect{
     private String XML_inRange = "20In.xml";
     
     private final int IMG_SCALE = 1;
+	private final int NUM_FRAMES = 5;
     
     CamDetect() {
         init();
