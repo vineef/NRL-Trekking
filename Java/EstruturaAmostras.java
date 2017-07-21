@@ -287,7 +287,7 @@ public class EstruturaAmostras
                 if (l.get(0).isExact())
                     aux.add(l.get(0));
 
-        System.out.println("aux:" + aux.size());
+        //System.out.println("aux:" + aux.size());
         return mergeObjsAvarage(aux);
     }
 
