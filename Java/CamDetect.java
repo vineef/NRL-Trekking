@@ -23,7 +23,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import java.awt.BorderLayout;
 
-public class CamDetectPierre{
+public class CamDetect{
 
     private JFrame frame;
     private VideoCapture cap;
@@ -41,13 +41,13 @@ public class CamDetectPierre{
     private String XML_hsv = "19H.xml";
     private String XML_inRange = "20In.xml";
 
-    CamDetectPierre() {
+    CamDetect() {
         init();
         thread();
     }
 
     public static void main(String[] args) {
-        new CamDetectPierre();
+        new CamDetect();
     }
 
     public void thread() {
@@ -60,22 +60,9 @@ public class CamDetectPierre{
                 int absoluteFaceSize = 0;
                 while (frame.isEnabled()) {
                     cap.read(normal);
-                    //System.out.println("FPS: " + cap.get(Videoio.CAP_PROP_FPS));
                     
                     Imgproc.resize(normal, normal, new Size(normal.cols()*1,normal.rows()*1));
-                    
-                    //Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2GRAY);
-                    //Imgproc.equalizeHist(mat, mat);
-                    //Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2HSV);
-                    //Imgproc.blur(mat, mat, new Size(2, 2));
-                    //Imgproc.Canny(mat, mat, 100, 200, 3, false);
-                    
-                    //Canny--------------------------------------------------
-//                    Imgproc.cvtColor(normal, normal, Imgproc.COLOR_BGR2GRAY);
-//                    Imgproc.blur(normal, normal, new Size(2,2));
-//                    Imgproc.Canny(normal, normal, 60, 180);
-//                    Imgproc.dilate(normal, normal,Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5)));
-					
+
                     if (absoluteFaceSize == 0) {
                         int height = normal.rows();
                         if (Math.round(height * 0.2f) > 0) {
@@ -146,7 +133,7 @@ public class CamDetectPierre{
     }
     
     private void init() {
-    	
+    	/* Configurando ClassPath manualmente para executar o programa pelo .jar
     	try {
 
             System.setProperty("java.library.path", "lib");
@@ -158,12 +145,12 @@ public class CamDetectPierre{
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException(ex);
-        }
+        }*/
     	
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-        //System.loadLibrary("opencv_ffmpeg320_64");
+        //System.loadLibrary("opencv_ffmpeg320_64"); //Biblioteca para leitura de video
 
-        frame = new JFrame("NRL - Nucleo Robotica Leopoldina PIERRE");
+        frame = new JFrame("NRL - Nucleo Robotica Leopoldina");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         frame.setResizable(true);
@@ -190,7 +177,7 @@ public class CamDetectPierre{
         XML_inRange = "/" + XML_inRange;
         caminhoXML = getClass().getResource(XML_inRange).getPath();
         inRangeCascade = new CascadeClassifier(caminhoXML.substring(1));
-        E
+
         amostras = new EstruturaAmostras();
     }
 
