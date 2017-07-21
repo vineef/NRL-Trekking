@@ -154,7 +154,7 @@ public class CamDetect{
         hsvCascade = new CascadeClassifier(getClass().getResource("/" + XML_hsv).getPath().substring(1));
         inRangeCascade = new CascadeClassifier(getClass().getResource("/" + XML_inRange).getPath().substring(1));
 
-        amostras = new EstruturaAmostras();
+        amostras = new EstruturaAmostras(NUM_FRAMES);
     }
 
     private static BufferedImage createAwtImage(Mat mat) { //Método para transformar Mat em ImageIcon
