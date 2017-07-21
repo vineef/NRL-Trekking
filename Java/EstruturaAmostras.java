@@ -76,8 +76,8 @@ public class EstruturaAmostras
      * @see #frameAvance()
      * @see #dFramesTruePositive
      */
-    private static final int NUMFRAMES = 3;
-
+    private int NUMFRAMES = 3;
+    
     /**
      * (LIMIT of DISTANCE for objects in diferent FRAMES) Limite de distância
      * entre objetos.(Não usado)
@@ -98,6 +98,19 @@ public class EstruturaAmostras
      */
     public EstruturaAmostras()
     {
+        this.frameTime = 0;
+        dFramesTruePositive = new ArrayList<>();
+        dNormal = new ArrayList<>();
+        dHSV = new ArrayList<>();
+        dInRange = new ArrayList<>();
+        int i;
+        for (i = 0; i < NUMFRAMES; i++)
+            dFramesTruePositive.add(new ArrayList<>());
+    }
+    
+    public EstruturaAmostras(int numFrames)
+    {
+    	this.NUMFRAMES = numFrames;
         this.frameTime = 0;
         dFramesTruePositive = new ArrayList<>();
         dNormal = new ArrayList<>();
