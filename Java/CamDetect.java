@@ -6,17 +6,13 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
-import org.opencv.objdetect.Objdetect;
 import org.opencv.videoio.VideoCapture;
-import org.opencv.videoio.Videoio;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
-import java.lang.reflect.Field;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -29,18 +25,19 @@ public class CamDetect{
     private VideoCapture cap;
     private JLabel label;
 
-    private String caminhoXML;
     private CascadeClassifier normalCascade;
     private CascadeClassifier hsvCascade;
     private CascadeClassifier inRangeCascade;
     
     private EstruturaAmostras amostras;
 
-    private final int CAMERA_ID = 1;
+    private final int CAMERA_ID = 0;
     private String XML_normal = "18N.xml";
-    private String XML_hsv = "19H.xml";
+    private String XML_hsv = "21H.xml";
     private String XML_inRange = "20In.xml";
-
+    
+    private final int IMG_SCALE = 1;
+    
     CamDetect() {
         init();
         thread();
@@ -57,32 +54,23 @@ public class CamDetect{
                 Mat normal = new Mat();
                 Mat inRange = new Mat();
                 Mat hsv = new Mat();
-                int absoluteFaceSize = 0;
                 while (frame.isEnabled()) {
                     cap.read(normal);
                     
-                    Imgproc.resize(normal, normal, new Size(normal.cols()*1,normal.rows()*1));
-
-                    if (absoluteFaceSize == 0) {
-                        int height = normal.rows();
-                        if (Math.round(height * 0.2f) > 0) {
-                            absoluteFaceSize = Math.round(height * 0.2f);
-                        }
-                    }                    
+                    Imgproc.resize(normal, normal, new Size(normal.cols()*IMG_SCALE,normal.rows()*IMG_SCALE));           
                     
                     inRange = normal.clone();
                     hsv = normal.clone();                    
                     
-                    //InRange Parte--------------------------------------------------------------------
-                    //Faz o tratamento na imagem para usar o cascade preto e branco
-                    Imgproc.cvtColor(normal, hsv, Imgproc.COLOR_BGR2HSV);
+                    //Faz o tratamento na imagem para usar o cascade com InRange e HSV
+                    Imgproc.cvtColor(normal, hsv, Imgproc.COLOR_BGR2HSV); //HSV
+                    //InRange Parte ----------------------------------------------------------
                     Mat im1 = new Mat();
                     Mat im2 = new Mat();
                     Core.inRange(hsv, new Scalar(0,80,30), new Scalar(13,230,255), im1);
                     Core.inRange(hsv, new Scalar(170,80,30), new Scalar(255,230,255), im2);
                     Core.bitwise_or(im1, im2, inRange);
-
-                    //----------------------------------------------------------------------------------
+                    //------------------------------------------------------------------------
                     
                     MatOfRect detectionsNormal = new MatOfRect();
                     MatOfRect detectionsHSV = new MatOfRect();
@@ -90,22 +78,19 @@ public class CamDetect{
                     
                     normalCascade.detectMultiScale(normal, detectionsNormal);
                     hsvCascade.detectMultiScale(hsv, detectionsHSV);                    
-                    //inRangeCascade.detectMultiScale(inRange, detectionsInRange, 1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE,
-                    //		new Size(absoluteFaceSize, absoluteFaceSize), new Size());
                     inRangeCascade.detectMultiScale(inRange, detectionsInRange);
-                    //normal = img;
                     
-                    amostras.saveObjs(detectionsNormal, ObjDetec.CascOrigin.Normal);//Amostras de InRange
-                    amostras.saveObjs(detectionsInRange, ObjDetec.CascOrigin.InRange);//Amostras de InRange
-                    amostras.saveObjs(detectionsHSV, ObjDetec.CascOrigin.HSV);//Amostras de InRange
+                    amostras.saveObjs(detectionsNormal, ObjDetec.CascOrigin.Normal); //Salva as amostras Normais
+                    amostras.saveObjs(detectionsInRange, ObjDetec.CascOrigin.InRange); //Salva as amostras InRange
+                    amostras.saveObjs(detectionsHSV, ObjDetec.CascOrigin.HSV); //Salva as amostras HSV
                     
-                    ObjDetec o = amostras.evaluateSamples();//Encontra a amostra positiva verdadeira
-                    if(o!=null)
-                    {
+                    ObjDetec o = amostras.evaluateSamples(); //Encontra a amostra positiva verdadeira
+                    if(o!=null){
                         Rect r = o.toRect();
                         Imgproc.rectangle(normal, new Point(r.x, r.y),
                             new Point(r.x + r.width, r.y + r.height), new Scalar(0, 255, 255), 2);
                     }
+                    
                     /*
                     for (Rect rect : detectionsNormal.toArray()) {
                         Imgproc.rectangle(normal, new Point(rect.x, rect.y), new Point(rect.x
@@ -123,10 +108,9 @@ public class CamDetect{
                     */
 					
                     
-                    ImageIcon image = new ImageIcon(createAwtImage(normal));
-
-                    frame.setSize(image.getIconWidth(), image.getIconHeight());
-                    label.setIcon(image);
+                    ImageIcon image = new ImageIcon(createAwtImage(normal)); //Converte Mat para ImageIcon
+                    frame.setSize(image.getIconWidth(), image.getIconHeight()); //Configura o tamanho da janela como tamanho da imagem
+                    label.setIcon(image); //Mostra a imagem
                 }
             }
         }.start();
@@ -166,22 +150,14 @@ public class CamDetect{
         cap.open(CAMERA_ID);
         //cap.open("http://192.168.0.103:8080/video"); 
 
-        XML_normal = "/" + XML_normal;
-        caminhoXML = getClass().getResource(XML_normal).getPath();
-        normalCascade = new CascadeClassifier(caminhoXML.substring(1));
-        
-        XML_hsv = "/" + XML_hsv;
-        caminhoXML = getClass().getResource(XML_hsv).getPath();
-        hsvCascade = new CascadeClassifier(caminhoXML.substring(1));
-        
-        XML_inRange = "/" + XML_inRange;
-        caminhoXML = getClass().getResource(XML_inRange).getPath();
-        inRangeCascade = new CascadeClassifier(caminhoXML.substring(1));
+        normalCascade = new CascadeClassifier(getClass().getResource("/" + XML_normal).getPath().substring(1));
+        hsvCascade = new CascadeClassifier(getClass().getResource("/" + XML_hsv).getPath().substring(1));
+        inRangeCascade = new CascadeClassifier(getClass().getResource("/" + XML_inRange).getPath().substring(1));
 
         amostras = new EstruturaAmostras();
     }
 
-    private static BufferedImage createAwtImage(Mat mat) {
+    private static BufferedImage createAwtImage(Mat mat) { //Método para transformar Mat em ImageIcon
         int type = 0;
         if (mat.channels() == 1){
             type = BufferedImage.TYPE_BYTE_GRAY;
