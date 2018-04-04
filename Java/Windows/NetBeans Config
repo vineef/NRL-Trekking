@@ -1,2 +1,6 @@
-#NetBeans configuração do classpath
-
+# NetBeans configuração do classpath
+A configuração definida no projeto usa o caminho de instalação do OpenCV em  "C:\Program Files\OpenCV",
+é fortemente recomendado que você use o mesmo destino para evitar problemas na execução do projeto no NetBeans.
+Caso tenha instalado em outro lugar e não queria mudar, é preciso alterar o caminho no seu projeto do NetBeans, vá nas propriedades do seu projeto
+na parte Executar, e altere as Opções de VM de:
+-Djava.library.path="C:\Program Files\OpenCV\opencv\build\java\x64" para o seu caminho correto de instalação.
